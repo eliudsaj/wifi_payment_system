@@ -302,24 +302,26 @@
   <script src="jquery.min.js"></script>
   <script src="swal.js"></script>
 
- <script>
+  <script>
     $(function () {
       var server, lnmolink, shortcode, title, pybillType, Paybill;
       $.getJSON("prices.json", function (data) {
 
         if (data) {
           const quota = data.quota, limit = data.duration, 
-          product_category_2 = data.product_category_2;
+          // added this 
+          product_category_2 = data.product_category_2
 
-          server = data.server;
-          lnmolink = data.lnmoapi;
-          shortcode = data.shortcode;
-          pybillType = data.paybill == 0 ? 'M-PESA Buy Goods' : 'M-PESA PayBill';
-          Paybill = data.paybill_no;
+          server = data.server
+          lnmolink = data.lnmoapi
+          shortcode = data.shortcode
+          pybillType = data.paybill == 0 ? 'M-PESA Buy Goods' : 'M-PESA PayBill'
+          Paybill = data.paybill_no
 
-          $("title, #wifi_name").text(data.title);
-          $("#paytype").text(pybillType);
-          $("#paybill").text(Paybill);
+          // $("#logo").attr("src", data.logo)
+          $("title, #wifi_name").text(data.title)
+          $("#paytype").text(pybillType)
+          $("#paybill").text(Paybill)
 
           quota.map((data_q) => {
             $("#price_quota").append(`
@@ -330,8 +332,21 @@
                   </p>
                   <p class="text-xs py-0 leading-3"><small>Max 2Mbps</small></p>
                 </div>
-              `);
-          });
+              `)
+          })
+          // Options More Data
+          // copy paste and change this data_q to product_category_2 if data, or if unlimited, use the time_limit
+          // quota.map((product_category_2) => {
+          //   $("#price_quota").append(`
+          //       <div onclick="dvalue(${data_q.price})" class="bg-${data_q.color}-600 ring ring-${data_q.color}-600 ring-offset-2 border-2 px-1 py-1 h-28 w-28 shadow rounded-full text-white flex flex-col justify-center items-center hover:bg-gray-700">
+          //         <h1 class="text-4xl font-bold">${data_q.price}/-</h1>
+          //         <p class="font-bold px-0 leading-3">
+          //           <small>${data_q.quota_limit}</small>
+          //         </p>
+          //         <p class="text-xs py-0 leading-3"><small>Max 2Mbps</small></p>
+          //       </div>
+          //     `)
+          // })
 
           limit.map((limit_data) => {
             $("#time_limit").append(`
@@ -342,9 +357,9 @@
                     </p>
                     <p class="text-xs py-0 leading-3"><small>Max 2Mbps</small></p>
                   </div>
-              `);
-          });
-
+              `)
+          })
+          // Option More Unlimited
           limit.map((product_category_2) => {
             $("#product_category_2").append(`
                   <div onclick="dvalue(${limit_data.price})" class="bg-${limit_data.color}-600 ring ring-${limit_data.color}-600 ring-offset-2 border-2 px-1 py-1 h-28 w-28 shadow rounded-full text-white flex flex-col justify-center items-center hover:bg-gray-700">
@@ -354,25 +369,25 @@
                     </p>
                     <p class="text-xs py-0 leading-3"><small>Max 2Mbps</small></p>
                   </div>
-              `);
-          });
+              `)
+          })
         }
 
-        // UI will update with new values...
-      });
+        // thats all, the UI will update with new values...
+      })
 
       $("#buy-form").on('click', function (ev) {
         ev.preventDefault();
 
-        var Amount = $("#amount").val(), Phone = $("#phone").val(), BillRefNumber = 'datas-' + Amount;
+        var Amount = $("#amount").val(), Phone = $("#phone").val(), BillRefNumber = 'datas-' + Amount
         if (Phone.length !== 12) {
-          swal.fire('', "Invalid Phone Number, Please enter your phone number using format 2547xx", 'error');
-          return;
+          swal.fire('', "Invalid Phone Number, Please enter your phone number using format 2547xx", 'error')
+          return
         }
 
         if (!Amount || Amount == null) {
-          swal.fire('', "Please tap one Data Choice to pay", 'error');
-          return;
+          swal.fire('', "Please tap one Data Choice to pay", 'error')
+          return
         }
 
         const mpesaData = {
@@ -382,72 +397,66 @@
           "amount": Amount,
           "account": BillRefNumber,
           "Remarks": "remarks"
-        };
+        }
 
-        // Send data to M-PESA
-        swal.fire('', 'Authenticating with M-PESA...', '');
-        
-        fetch(`${lnmolink}`, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(mpesaData)
-        })
-        .then(res => res.json())
-        .then(res => {
-          if (res.code == 0) {
-            swal.fire('', res.msg, '');
-            var x = localStorage.getItem('phone');
-            if (!x) {
-              localStorage.setItem('phone', Phone);
-            }
-          } else {
-            swal.fire('', res.msg, '');
+        swal.fire('', 'Authenticating with M-PESA...', '')
+        function handleErrors(response) {
+          if (!response.ok) {
+            throw Error(response.statusText);
           }
-          console.log('data sent to server and came back as follows');
-          console.log(res);
-        })
-        .catch(err => alert('An error occurred. Please pay using the manual way.'));
+          return response;
+        }
 
-        // Add this to send a copy to the database
-        fetch(`/MpesaData`, {
+        fetch(`${lnmolink}`,
+          {
             method: 'POST',
+            mode: 'no-cors',
             headers: {
-                'Content-Type': 'application/json',
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify(mpesaData)
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.success) {
-                console.log('Data successfully saved to the database.');
-            } else {
-                console.error('Failed to save data:', res.error);
+          })
+          .then(res => res.json())
+          .then(res => {
+            if (res.code == 0) {
+              swal.fire('', res.msg, '')
+              var x = localStorage.getItem('phone')
+              if (!x) {
+                localStorage.setItem('phone', Phone)
+              }
             }
-        })
-        .catch(err => console.error('Error occurred while sending data to the server:', err));
-      });
-    });
+            else {
+              swal.fire('', res.msg, '')
+            }
+            console.log('data sent to server and came back as follows')
+            console.log(res)
+          })
+          .catch(err => alert('An error occured. Please pay using the manual way.'))
+
+        console.log(mpesaData)
+      })
+    })
+
 
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', `${server}`);
+    xhr.open('GET', `${server}`)
     xhr.responseType = 'json';
-    xhr.send();
+    xhr.send()
     xhr.onload = function () {
       let responseObj = xhr.response;
       console.log(responseObj.message[0].msg);
       if (responseObj.message[0].msg !== null) {
-        document.getElementById('notification').innerHTML = '<p class="text-green-700"><span class="font-bold">' + responseObj.message[0].title + '<br /> </span><span> ' + responseObj.message[0].msg + '</span></p>';
+        document.getElementById('notification').innerHTML = '<p class="text-green-700"><span class="font-bold">' + responseObj.message[0].title + '<br /> </span><span> ' + responseObj.message[0].msg + '</span></p>'
       }
     };
 
     function dvalue(value) {
-      const amount = value;
-      window.document.getElementById('amount').value = value;
+      const amount = value
+      window.document.getElementById('amount').value = value
     }
-</script>
 
+  </script>
+
+</body>
 
 </html>

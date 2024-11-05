@@ -3,14 +3,14 @@
 
 <%
     String username = request.getParameter("username");
-    String phone = request.getParameter("phone");
+    String phone = request.getParameter("Access Code");
 
     Connection conn = null;
     PreparedStatement pstmt = null;
 
     try {
         conn = DatabaseConnection.getConnection();
-        String sql = "INSERT INTO users (username, phone) VALUES (?, ?)";
+        String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
         pstmt = conn.prepareStatement(sql);
         pstmt.setString(1, username);
         pstmt.setString(2, phone);
