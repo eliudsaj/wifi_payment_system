@@ -1,21 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee 
-                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
+    
     <display-name>htpms</display-name>
+
+    <!-- Welcome File -->
     <welcome-file-list>
         <welcome-file>login.html</welcome-file>
     </welcome-file-list>
 
+    <!-- MpesaDataServlet Configuration -->
     <servlet>
         <servlet-name>MpesaDataServlet</servlet-name>
         <servlet-class>com.eliud.login.MpesaDataServlet</servlet-class>
     </servlet>
-
     <servlet-mapping>
         <servlet-name>MpesaDataServlet</servlet-name>
         <url-pattern>/MpesaData</url-pattern>
+    </servlet-mapping>
+
+    <!-- LoginServlet Configuration -->
+    <servlet>
+        <servlet-name>LoginServlet</servlet-name>
+        <servlet-class>com.eliud.mpesa.LoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LoginServlet</servlet-name>
+        <url-pattern>/Login</url-pattern>
+    </servlet-mapping>
+
+    <!-- MpesaPaymentServlet Configuration -->
+    <servlet>
+        <servlet-name>PaymentServlet</servlet-name>
+        <servlet-class>com.eliud.mpesa.PaymentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PaymentServlet</servlet-name>
+        <url-pattern>/Payment</url-pattern>
+    </servlet-mapping>
+
+    <!-- StatusServlet Configuration -->
+    <servlet>
+        <servlet-name>StatusServlet</servlet-name>
+        <servlet-class>com.eliud.mpesa.StatusServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>StatusServlet</servlet-name>
+        <url-pattern>/status</url-pattern>
     </servlet-mapping>
 </web-app>
