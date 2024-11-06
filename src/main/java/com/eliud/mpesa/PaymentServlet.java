@@ -1,5 +1,7 @@
 package com.eliud.mpesa;
 
+
+import com.eliud.login.DatabaseConnection;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,51 +16,54 @@ import org.json.JSONObject;
 import java.util.Base64;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 @WebServlet("/PaymentServlet")
 public class PaymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private static final String CONSUMER_KEY = "rdGcLVrAS7DxXGIAu2twbki8x2DEnY484ZXp09qSc3oo8FUG";
-    private static final String CONSUMER_SECRET = "BYdQQrGfElR83M8Cv88AYAvy7nrZTN65vqbG1SBA5xAUxXkdedOnYznKK2ZA6QGm";
+    private static final String CONSUMER_KEY = "your_consumer_key";
+    private static final String CONSUMER_SECRET = "your_consumer_secret";
     private static final String SHORTCODE = "195897";
     private static final String PASSKEY = "your_passkey";
-    private static final String CALLBACK_URL = "http://localhost:8080/htpms/LoginServlet"; // Change to your actual callback URL
+    private static final String CALLBACK_URL = "http://localhost:8080/yourapp/PaymentCallbackServlet"; // Update with correct path
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Step 1: Retrieve JSON data sent from the frontend
         StringBuilder stringBuilder = new StringBuilder();
         String line;
         BufferedReader reader = request.getReader();
         while ((line = reader.readLine()) != null) {
             stringBuilder.append(line);
         }
-        
+
         JSONObject requestData = new JSONObject(stringBuilder.toString());
         String phoneNumber = requestData.getString("phone");
-        String amount = requestData.getString("amount");
-        String accountReference = requestData.getString("account");
+        int amount = requestData.getInt("amount");
 
-        // Step 2: Get access token
         String accessToken = getAccessToken();
         if (accessToken == null) {
             sendJsonResponse(response, false, "Failed to get access token.");
             return;
         }
 
-        // Step 3: Process STK push request
-        boolean paymentSuccessful = initiateStkPush(phoneNumber, amount, accessToken);
-        if (paymentSuccessful) {
-            sendJsonResponse(response, true, "Payment request sent successfully!");
+        boolean paymentInitiated = initiateStkPush(phoneNumber, amount, accessToken);
+        if (paymentInitiated) {
+            String accessCode = generateAccessCode();
+            storeInitialPaymentData(phoneNumber, amount, accessCode); // Store data before callback
+            sendJsonResponse(response, true, "Payment initiated! Please check your phone.");
         } else {
-            sendJsonResponse(response, false, "Payment request failed.");
+            sendJsonResponse(response, false, "Payment initiation failed.");
         }
     }
 
-    // Method to get access token
     private String getAccessToken() {
         try {
-            String authUrl = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
+            String authUrl = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
             String authString = CONSUMER_KEY + ":" + CONSUMER_SECRET;
             String encodedAuth = Base64.getEncoder().encodeToString(authString.getBytes(StandardCharsets.UTF_8));
 
@@ -68,14 +73,12 @@ public class PaymentServlet extends HttpServlet {
             conn.setRequestProperty("Authorization", "Basic " + encodedAuth);
 
             if (conn.getResponseCode() == 200) {
-                // Use BufferedReader to read the response
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                    String inputLine;
                     StringBuilder response = new StringBuilder();
+                    String inputLine;
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine);
                     }
-                    // Parse the JSON response to get the access token
                     JSONObject json = new JSONObject(response.toString());
                     return json.getString("access_token");
                 }
@@ -86,20 +89,18 @@ public class PaymentServlet extends HttpServlet {
         return null;
     }
 
-    // Method to initiate the STK push request
-    private boolean initiateStkPush(String phoneNumber, String amount, String accessToken) {
+    private boolean initiateStkPush(String phoneNumber, int amount, String accessToken) {
         try {
             String stkUrl = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
-            String timestamp = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
+            String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
             String password = Base64.getEncoder().encodeToString((SHORTCODE + PASSKEY + timestamp).getBytes());
 
-            // Build JSON payload for STK push request
             JSONObject json = new JSONObject();
             json.put("BusinessShortCode", SHORTCODE);
             json.put("Password", password);
             json.put("Timestamp", timestamp);
             json.put("TransactionType", "CustomerPayBillOnline");
-            json.put("Amount", Integer.parseInt(amount));
+            json.put("Amount", amount);
             json.put("PartyA", phoneNumber);
             json.put("PartyB", SHORTCODE);
             json.put("PhoneNumber", phoneNumber);
@@ -107,7 +108,6 @@ public class PaymentServlet extends HttpServlet {
             json.put("AccountReference", "Ref001");
             json.put("TransactionDesc", "Payment");
 
-            // Set up HTTP connection
             URL url = new URL(stkUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
@@ -115,21 +115,37 @@ public class PaymentServlet extends HttpServlet {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
-            // Send JSON request
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(json.toString().getBytes(StandardCharsets.UTF_8));
             }
 
-            // Check response
             return conn.getResponseCode() == 200;
-
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    // Method to send JSON response back to the frontend
+    private String generateAccessCode() {
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000);
+        return String.valueOf(code);
+    }
+
+    private void storeInitialPaymentData(String phoneNumber, int amount, String accessCode) {
+        String query = "INSERT INTO payments (phone_number, amount, access_code, payment_status) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, phoneNumber);
+            stmt.setInt(2, amount);
+            stmt.setString(3, accessCode);
+            stmt.setString(4, "Pending");
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void sendJsonResponse(HttpServletResponse response, boolean success, String message) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
