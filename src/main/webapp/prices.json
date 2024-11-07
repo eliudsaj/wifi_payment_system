@@ -32,19 +32,19 @@
   ],
   "duration": [
     {
-      "quota_limit": "",
-      "price": "15",
-      "duration_limit": "1Hr Unlimited",
+      "quota_limit": "1Hr Unlimited",
+      "price": "10",
+      "duration_limit": "",
       "color": "purple"
     },
     {
-      "quota_limit": "",
+      "quota_limit": "12Hrs",
       "price": "49",
       "duration_limit": "12Hrs Unlimited",
       "color": "black"
     },
     {
-      "quota_limit": "",
+      "quota_limit": "24Hrs Unlimited",
       "price": "99",
       "duration_limit": "24Hrs Unlimited",
       "color": "red"
@@ -52,20 +52,20 @@
   ],
   "product_category_2": [
     {
-      "quota_limit": "",
+      "quota_limit": "15days Unlimited",
       "price": "500",
       "duration_limit": "15days Unlimited",
       "color": "purple"
     },
     {
-      "quota_limit": "",
+      "quota_limit": "20days Unlimited",
       "price": "700",
       "duration_limit": "20days Unlimited",
       "color": "black"
     },
     {
-      "quota_limit": "",
-      "price": "1500",
+      "quota_limit": "30days Unlimited",
+      "price": "999",
       "duration_limit": "30days Unlimited",
       "color": "red"
     }

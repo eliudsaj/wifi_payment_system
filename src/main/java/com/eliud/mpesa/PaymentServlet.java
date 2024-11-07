@@ -1,6 +1,5 @@
 package com.eliud.mpesa;
 
-
 import com.eliud.login.DatabaseConnection;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,6 +11,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Base64;
 import java.io.BufferedReader;
@@ -41,24 +41,44 @@ public class PaymentServlet extends HttpServlet {
             stringBuilder.append(line);
         }
 
-        JSONObject requestData = new JSONObject(stringBuilder.toString());
-        String phoneNumber = requestData.getString("phone");
-        int amount = requestData.getInt("amount");
+        try {
+            JSONObject requestData = new JSONObject(stringBuilder.toString());
+            String phoneNumber = requestData.getString("phone");
+            int amount = requestData.getInt("amount");
 
-        String accessToken = getAccessToken();
-        if (accessToken == null) {
-            sendJsonResponse(response, false, "Failed to get access token.");
-            return;
-        }
+            if (!validatePhoneNumber(phoneNumber)) {
+                sendJsonResponse(response, false, "Invalid phone number format.");
+                return;
+            }
 
-        boolean paymentInitiated = initiateStkPush(phoneNumber, amount, accessToken);
-        if (paymentInitiated) {
-            String accessCode = generateAccessCode();
-            storeInitialPaymentData(phoneNumber, amount, accessCode); // Store data before callback
-            sendJsonResponse(response, true, "Payment initiated! Please check your phone.");
-        } else {
-            sendJsonResponse(response, false, "Payment initiation failed.");
+            String accessToken = getAccessToken();
+            if (accessToken == null) {
+                sendJsonResponse(response, false, "Failed to get access token.");
+                return;
+            }
+
+            boolean paymentInitiated = initiateStkPush(phoneNumber, amount, accessToken);
+            if (paymentInitiated) {
+                String accessCode = generateAccessCode();
+                storeInitialPaymentData(phoneNumber, amount, accessCode); // Store data before callback
+                sendJsonResponse(response, true, "Payment initiated! Please check your phone.");
+            } else {
+                sendJsonResponse(response, false, "Payment initiation failed.");
+            }
+        } catch (JSONException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendJsonResponse(response, false, "Invalid JSON data.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            sendJsonResponse(response, false, "An error occurred during payment initiation.");
+            e.printStackTrace();
         }
+    }
+
+    private boolean validatePhoneNumber(String phoneNumber) {
+        // Validate phone number format for your country (e.g., starts with country code, 254 for Kenya)
+        return phoneNumber != null && phoneNumber.matches("2547[0-9]{8}");
     }
 
     private String getAccessToken() {
@@ -82,8 +102,11 @@ public class PaymentServlet extends HttpServlet {
                     JSONObject json = new JSONObject(response.toString());
                     return json.getString("access_token");
                 }
+            } else {
+                System.err.println("Failed to get access token. Response code: " + conn.getResponseCode());
             }
         } catch (Exception e) {
+            System.err.println("Error getting access token: " + e.getMessage());
             e.printStackTrace();
         }
         return null;
@@ -93,7 +116,7 @@ public class PaymentServlet extends HttpServlet {
         try {
             String stkUrl = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
             String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-            String password = Base64.getEncoder().encodeToString((SHORTCODE + PASSKEY + timestamp).getBytes());
+            String password = Base64.getEncoder().encodeToString((SHORTCODE + PASSKEY + timestamp).getBytes(StandardCharsets.UTF_8));
 
             JSONObject json = new JSONObject();
             json.put("BusinessShortCode", SHORTCODE);
@@ -121,6 +144,7 @@ public class PaymentServlet extends HttpServlet {
 
             return conn.getResponseCode() == 200;
         } catch (Exception e) {
+            System.err.println("Error initiating STK push: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
@@ -128,7 +152,7 @@ public class PaymentServlet extends HttpServlet {
 
     private String generateAccessCode() {
         Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
+        int code = 100000 + random.nextInt(900000);  // Generate a 6-digit code
         return String.valueOf(code);
     }
 
@@ -142,6 +166,7 @@ public class PaymentServlet extends HttpServlet {
             stmt.setString(4, "Pending");
             stmt.executeUpdate();
         } catch (SQLException e) {
+            System.err.println("Error storing initial payment data for phone number: " + phoneNumber);
             e.printStackTrace();
         }
     }

@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 @WebServlet("/PaymentCallbackServlet")
@@ -24,25 +25,44 @@ public class PaymentCallbackServlet extends HttpServlet {
         StringBuilder stringBuilder = new StringBuilder();
         String line;
         BufferedReader reader = request.getReader();
+        
         while ((line = reader.readLine()) != null) {
             stringBuilder.append(line);
         }
 
-        JSONObject callbackData = new JSONObject(stringBuilder.toString());
-        String phoneNumber = callbackData.getString("phoneNumber");
-        String status = callbackData.getString("status");
+        try {
+            JSONObject callbackData = new JSONObject(stringBuilder.toString());
+            String phoneNumber = callbackData.getString("phoneNumber");
+            String status = callbackData.getString("status");
+            int amount = callbackData.getInt("amount");
 
-        // Update payment status in the database
-        updatePaymentStatus(phoneNumber, status);
+            // Update payment status in the database
+            updatePaymentStatus(phoneNumber, status);
 
-        if ("success".equalsIgnoreCase(status)) {
-            // Generate access code and send SMS
-            String accessCode = generateAccessCode();
-            String limit = calculateLimitFromDatabase(Integer.parseInt(callbackData.getString("amount")));
-            storePaymentData(phoneNumber, Integer.parseInt(callbackData.getString("amount")), accessCode, limit);
+            if ("success".equalsIgnoreCase(status)) {
+                // Generate access code and send SMS
+                String accessCode = generateAccessCode();
+                String limit = calculateLimitFromDatabase(amount);
+                storePaymentData(phoneNumber, amount, accessCode, limit);
 
-            // Send SMS with access code
-            SmsSender.sendSms(phoneNumber, "Your access code is: " + accessCode);
+                // Send SMS with access code
+                SmsSender.sendSms(phoneNumber, "Your access code is: " + accessCode);
+            }
+
+            // Send success response back to Safaricom
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("Callback received and processed successfully.");
+
+        } catch (JSONException e) {
+            // JSON parsing error
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Invalid JSON data received.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            // Other errors
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("An error occurred processing the callback.");
+            e.printStackTrace();
         }
     }
 
@@ -53,8 +73,12 @@ public class PaymentCallbackServlet extends HttpServlet {
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, status);
             stmt.setString(2, phoneNumber);
-            stmt.executeUpdate();
+            int updatedRows = stmt.executeUpdate();
+            if (updatedRows == 0) {
+                System.err.println("No rows updated for phone number: " + phoneNumber);
+            }
         } catch (SQLException e) {
+            System.err.println("Error updating payment status for phone number: " + phoneNumber);
             e.printStackTrace();
         }
     }
@@ -77,8 +101,11 @@ public class PaymentCallbackServlet extends HttpServlet {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 limit = rs.getString("duration_limit");
+            } else {
+                System.err.println("No limit found for amount: " + amount);
             }
         } catch (SQLException e) {
+            System.err.println("Error calculating limit for amount: " + amount);
             e.printStackTrace();
         }
 
@@ -94,8 +121,12 @@ public class PaymentCallbackServlet extends HttpServlet {
             stmt.setString(2, limit);
             stmt.setString(3, "Completed");  // Mark the payment as completed
             stmt.setString(4, phoneNumber);
-            stmt.executeUpdate();
+            int updatedRows = stmt.executeUpdate();
+            if (updatedRows == 0) {
+                System.err.println("No rows updated for phone number: " + phoneNumber);
+            }
         } catch (SQLException e) {
+            System.err.println("Error storing payment data for phone number: " + phoneNumber);
             e.printStackTrace();
         }
     }

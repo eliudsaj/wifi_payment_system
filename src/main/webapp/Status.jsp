@@ -50,7 +50,7 @@
       <div
         class="bg-white rounded-md flex justify-between items-center m-5 px-3 py-3"
       >
-        <span class="text-green-500 text-sm"><span class="fa fa-wifi px-2"></span>ezWiFi Data Balance</span>
+        <span class="text-green-500 text-sm"><span class="fa fa-wifi px-2"></span>eazzynet Data Balance</span>
         <span class="text-sm font-bold">${remainBytesTotalNice}</span> <!-- Use EL to display data balance -->
       </div>
 
@@ -58,7 +58,7 @@
       <div
         class="bg-white rounded-md flex justify-between items-center m-5 px-3 py-3"
       >
-        <span class="text-green-500 text-sm"><span class="fa fa-mobile px-2"></span>Mambodata Balance</span>
+        <span class="text-green-500 text-sm"><span class="fa fa-mobile px-2"></span>eazzynet Balance</span>
         <span class="text-sm font-bold">0MB</span> <!-- Static example, replace with dynamic value if needed -->
       </div>
 
@@ -66,7 +66,7 @@
       <div
         class="bg-white rounded-md flex justify-between items-center m-5 px-3 py-3"
       >
-        <span class="text-green-500 text-sm"><span class="fa fa-envelope px-2"></span>Mambodata SMS Balance</span>
+        <span class="text-green-500 text-sm"><span class="fa fa-envelope px-2"></span>eazzynet SMS Balance</span>
         <span class="text-sm font-bold">0SMS</span> <!-- Static example, replace with dynamic value if needed -->
       </div>
     </div>

@@ -21,5 +21,7 @@
 			<attribute name="javadoc_location" value="https://javaee.github.io/javaee-spec/javadocs/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/xampp/htdocs/htpms/src/main/webapp/WEB-INF/lib/mockito-core-4.8.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/xampp/htdocs/htpms/src/main/webapp/WEB-INF/lib/junit-4.12.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
