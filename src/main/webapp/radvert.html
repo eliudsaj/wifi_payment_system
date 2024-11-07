@@ -1,13 +1,13 @@
 <html>
 <head>
-<title>mikrotik hotspot > advertisement</title>
-<meta http-equiv="refresh" content="2; url=$(link-orig)">
+<title>eazzynet hotspot > advertisement</title>
+<meta http-equiv="refresh" content="2; url=https://www.youtube.com/watch?v=SQWreN69g_Q">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta http-equiv="pragma" content="no-cache">
 <meta http-equiv="expires" content="-1">
 <style type="text/css">
 <!--
-textarea,input,select {
+textarea, input, select {
 	background-color: #FDFBFB;
 	border: 1px #BBBBBB solid;
 	padding: 2px;
@@ -16,34 +16,54 @@ textarea,input,select {
 	color: #808080;
 }
 
-body{ color: #737373; font-size: 12px; font-family: verdana; }
+body {
+	color: #737373;
+	font-size: 12px;
+	font-family: verdana;
+}
 
-a, a:link, a:visited, a:active { color: #AAAAAA; text-decoration: none; font-size: 12px; }
-a:hover { border-bottom: 1px dotted #c1c1c1; color: #AAAAAA; }
-img {border: none;}
-td { font-size: 12px; color: #7A7A7A; }
+a, a:link, a:visited, a:active {
+	color: #AAAAAA;
+	text-decoration: none;
+	font-size: 12px;
+}
 
+a:hover {
+	border-bottom: 1px dotted #c1c1c1;
+	color: #AAAAAA;
+}
+
+img {
+	border: none;
+}
+
+td {
+	font-size: 12px;
+	color: #7A7A7A;
+}
 -->
 </style>
 <script language="JavaScript">
-<!--
+
     var popup = '';
     function openOrig() {
-	if (window.focus) popup.focus();
-	location.href = '$(link-orig)';
+        if (window.focus) popup.focus();
+        location.href = 'https://www.youtube.com/shorts/jfmFLWgD5Kc'; // Replace with your original link
     }
+
     function openAd() {
-	location.href = '$(link-redirect)';
+        location.href = 'https://www.youtube.com/shorts/jfmFLWgD5Kc'; // Replace with your redirect advertisement link
     }
+
     function openAdvert() {
-	if (window.name != 'hotspot_advert') {
-		popup = open('$(link-redirect)', 'hotspot_advert', '');
-		setTimeout("openOrig()", 1000);
-		return;
-	}
-	setTimeout("openAd()", 1000);
+        if (window.name != 'hotspot_advert') {
+            popup = open('https://www.youtube.com/shorts/jfmFLWgD5Kc', 'hotspot_advert', ''); // Open advertisement in a popup
+            setTimeout("openOrig()", 1000); // Wait 1 second before redirecting to original link
+            return;
+        }
+        setTimeout("openAd()", 1000); // Wait 1 second before redirecting to the advertisement link
     }
-//-->
+
 </script>
 </head>
 <body onLoad="openAdvert()">
@@ -53,8 +73,7 @@ td { font-size: 12px; color: #7A7A7A; }
 	Advertisement.
 	<br><br>
 	If nothing happens, open
-	<a href="$(link-redirect)" target="hotspot_advert">advertisement</a>
-	manually.
+	<a href="https://www.youtube.com/shorts/jfmFLWgD5Kc" target="hotspot_advert">advertisement</a> manually.
 	</td>
 </tr>
 </table>
