@@ -41,6 +41,16 @@
         <servlet-name>PaymentServlet</servlet-name>
         <url-pattern>/Payment</url-pattern>
     </servlet-mapping>
+    
+    <!-- ManualPaymentServlet Configuration -->
+    <servlet>
+        <servlet-name>ManualPaymentServlet</servlet-name>
+        <servlet-class>com.eliud.mpesa.ManualPaymentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ManualPaymentServlet</servlet-name>
+        <url-pattern>/ManualPayment</url-pattern>
+    </servlet-mapping>
 
     <!-- StatusServlet Configuration -->
     <servlet>

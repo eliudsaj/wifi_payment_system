@@ -36,43 +36,52 @@ public class PaymentCallbackServlet extends HttpServlet {
             String status = callbackData.getString("status");
             int amount = callbackData.getInt("amount");
 
+            // Check for manual payment transactionId (if provided in callback)
+            String transactionId = callbackData.has("transactionId") ? callbackData.getString("transactionId") : null;
+
             // Update payment status in the database
-            updatePaymentStatus(phoneNumber, status);
+            updatePaymentStatus(phoneNumber, transactionId, status);
 
             if ("success".equalsIgnoreCase(status)) {
-                // Generate access code and send SMS
+                // Generate access code and calculate limit
                 String accessCode = generateAccessCode();
                 String limit = calculateLimitFromDatabase(amount);
+                
+                // Store the access code and limit for successful payment
                 storePaymentData(phoneNumber, amount, accessCode, limit);
 
                 // Send SMS with access code
                 SmsSender.sendSms(phoneNumber, "Your access code is: " + accessCode);
             }
 
-            // Send success response back to Safaricom
+            // Send success response back to Safaricom or other external system
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write("Callback received and processed successfully.");
 
         } catch (JSONException e) {
-            // JSON parsing error
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("Invalid JSON data received.");
             e.printStackTrace();
         } catch (Exception e) {
-            // Other errors
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("An error occurred processing the callback.");
             e.printStackTrace();
         }
     }
 
-    // Update payment status in the database
-    private void updatePaymentStatus(String phoneNumber, String status) {
+    // Update payment status in the database based on phoneNumber or transactionId
+    private void updatePaymentStatus(String phoneNumber, String transactionId, String status) {
         String query = "UPDATE payments SET payment_status = ? WHERE phone_number = ?";
+        if (transactionId != null && !transactionId.isEmpty()) {
+            query += " AND transaction_id = ?";
+        }
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, status);
             stmt.setString(2, phoneNumber);
+            if (transactionId != null && !transactionId.isEmpty()) {
+                stmt.setString(3, transactionId);
+            }
             int updatedRows = stmt.executeUpdate();
             if (updatedRows == 0) {
                 System.err.println("No rows updated for phone number: " + phoneNumber);
@@ -94,7 +103,6 @@ public class PaymentCallbackServlet extends HttpServlet {
     private String calculateLimitFromDatabase(int amount) {
         String limit = "Default Limit";
         String query = "SELECT duration_limit FROM pricing_limits WHERE price = ?";
-
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, amount);
@@ -108,7 +116,6 @@ public class PaymentCallbackServlet extends HttpServlet {
             System.err.println("Error calculating limit for amount: " + amount);
             e.printStackTrace();
         }
-
         return limit;
     }
 
@@ -119,7 +126,7 @@ public class PaymentCallbackServlet extends HttpServlet {
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, accessCode);
             stmt.setString(2, limit);
-            stmt.setString(3, "Completed");  // Mark the payment as completed
+            stmt.setString(3, "Completed");
             stmt.setString(4, phoneNumber);
             int updatedRows = stmt.executeUpdate();
             if (updatedRows == 0) {
@@ -131,3 +138,4 @@ public class PaymentCallbackServlet extends HttpServlet {
         }
     }
 }
+

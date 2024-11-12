@@ -63,7 +63,7 @@ public class PaymentServlet extends HttpServlet {
                 storeInitialPaymentData(phoneNumber, amount, accessCode); // Store data before callback
                 sendJsonResponse(response, true, "Payment initiated! Please check your phone.");
             } else {
-                sendJsonResponse(response, false, "Payment initiation failed.");
+                sendJsonResponse(response, false, "Payment initiation failed. You can proceed manually.");
             }
         } catch (JSONException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -77,7 +77,6 @@ public class PaymentServlet extends HttpServlet {
     }
 
     private boolean validatePhoneNumber(String phoneNumber) {
-        // Validate phone number format for your country (e.g., starts with country code, 254 for Kenya)
         return phoneNumber != null && phoneNumber.matches("2547[0-9]{8}");
     }
 
@@ -177,6 +176,9 @@ public class PaymentServlet extends HttpServlet {
         JSONObject jsonResponse = new JSONObject();
         jsonResponse.put("success", success);
         jsonResponse.put("message", message);
+        if (!success) {
+            jsonResponse.put("redirectUrl", "Payment.jsp");  // Add redirect URL for failed payments
+        }
         response.getWriter().write(jsonResponse.toString());
     }
 }

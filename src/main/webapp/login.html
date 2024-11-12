@@ -387,12 +387,21 @@
             localStorage.setItem('phone', Phone);
           }
         } else {
-          swal.fire('', data.message, 'error');
+        	// Show SweetAlert dialog with error message
+        	Swal.fire('', data.message, 'error');
+
+        	// Redirect to manualogin.jsp after the dialog box
+        	setTimeout(function() {
+        	    window.location.href = "Payment.jsp?amount=" + Amount;
+        	}, 4000); // Delay the redirect by 2 seconds to give the user time to read the message
+
         }
       })
       .catch(error => {
         console.error('Error:', error);
         alert('An error occurred. Please try the manual payment method.');
+        // Redirect to manuallogin.jsp if an error occurs
+        window.location.href = "Payment.jsp?amount=" + Amount;
       });
     });
   });
@@ -402,6 +411,7 @@
     window.document.getElementById('amount').value = value;
   }
 </script>
+
 
 
 </body>
