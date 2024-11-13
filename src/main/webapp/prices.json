@@ -38,7 +38,7 @@
       "color": "purple"
     },
     {
-      "quota_limit": "12Hrs",
+      "quota_limit": "12Hrs Unlimited",
       "price": "49",
       "duration_limit": "12Hrs Unlimited",
       "color": "black"
